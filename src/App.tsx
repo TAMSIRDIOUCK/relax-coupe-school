@@ -40,7 +40,7 @@ const App: React.FC = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         setUserId(data.session.user.id);
-        setCurrentView('dashboard'); // redirection automatique si déjà connecté
+        setCurrentView('dashboard');
       } else {
         setCurrentView('login');
       }
@@ -120,8 +120,7 @@ const App: React.FC = () => {
   };
 
   // ---------------- Chargement ----------------
-  if (loading)
-    return <div className="text-white text-center mt-10">Chargement...</div>;
+  if (loading) return <div className="text-white text-center mt-10">Chargement...</div>;
 
   // ---------------- Contenu principal ----------------
   return (
@@ -143,24 +142,19 @@ const App: React.FC = () => {
 
             {/* Menu mobile */}
             <div className="md:hidden">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="text-white"
-              >
+              <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
 
             {/* Navigation desktop */}
             <nav className="hidden md:flex items-center space-x-4">
-              {!userId && (
+              {!userId ? (
                 <>
                   <button
                     onClick={() => setCurrentView('login')}
                     className={`px-3 py-2 rounded-lg ${
-                      currentView === 'login'
-                        ? 'bg-gray-800 text-yellow-400'
-                        : 'text-gray-300 hover:text-white'
+                      currentView === 'login' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     Connexion
@@ -168,36 +162,27 @@ const App: React.FC = () => {
                   <button
                     onClick={() => setCurrentView('signup')}
                     className={`px-3 py-2 rounded-lg ${
-                      currentView === 'signup'
-                        ? 'bg-gray-800 text-yellow-400'
-                        : 'text-gray-300 hover:text-white'
+                      currentView === 'signup' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     Inscription
                   </button>
                 </>
-              )}
-
-              {userId && (
+              ) : (
                 <>
                   <button
                     onClick={() => setCurrentView('dashboard')}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
-                      currentView === 'dashboard'
-                        ? 'bg-gray-800 text-yellow-400'
-                        : 'text-gray-300 hover:text-white'
+                      currentView === 'dashboard' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     <BookOpen className="w-5 h-5" />
                     <span className="hidden sm:inline">Formation</span>
                   </button>
-
                   <button
                     onClick={() => setCurrentView('recruitment')}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
-                      currentView === 'recruitment'
-                        ? 'bg-gray-800 text-yellow-400'
-                        : 'text-gray-300 hover:text-white'
+                      currentView === 'recruitment' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     <Users className="w-5 h-5" />
@@ -221,7 +206,7 @@ const App: React.FC = () => {
         {/* Menu mobile ouvert */}
         {menuOpen && (
           <div className="md:hidden px-4 pb-4 space-y-2">
-            {!userId && (
+            {!userId ? (
               <>
                 <button
                   onClick={() => {
@@ -229,9 +214,7 @@ const App: React.FC = () => {
                     setMenuOpen(false);
                   }}
                   className={`block w-full text-left px-4 py-2 rounded-lg ${
-                    currentView === 'login'
-                      ? 'bg-gray-800 text-yellow-400'
-                      : 'text-gray-300 hover:text-white'
+                    currentView === 'login' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                   }`}
                 >
                   🔑 Connexion
@@ -242,17 +225,13 @@ const App: React.FC = () => {
                     setMenuOpen(false);
                   }}
                   className={`block w-full text-left px-4 py-2 rounded-lg ${
-                    currentView === 'signup'
-                      ? 'bg-gray-800 text-yellow-400'
-                      : 'text-gray-300 hover:text-white'
+                    currentView === 'signup' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                   }`}
                 >
                   📝 Inscription
                 </button>
               </>
-            )}
-
-            {userId && (
+            ) : (
               <>
                 <button
                   onClick={() => {
@@ -260,9 +239,7 @@ const App: React.FC = () => {
                     setMenuOpen(false);
                   }}
                   className={`flex items-center space-x-2 block w-full text-left px-4 py-2 rounded-lg ${
-                    currentView === 'dashboard'
-                      ? 'bg-gray-800 text-yellow-400'
-                      : 'text-gray-300 hover:text-white'
+                    currentView === 'dashboard' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                   }`}
                 >
                   <BookOpen className="w-5 h-5" />
@@ -274,9 +251,7 @@ const App: React.FC = () => {
                     setMenuOpen(false);
                   }}
                   className={`flex items-center space-x-2 block w-full text-left px-4 py-2 rounded-lg ${
-                    currentView === 'recruitment'
-                      ? 'bg-gray-800 text-yellow-400'
-                      : 'text-gray-300 hover:text-white'
+                    currentView === 'recruitment' ? 'bg-gray-800 text-yellow-400' : 'text-gray-300 hover:text-white'
                   }`}
                 >
                   <Users className="w-5 h-5" />
