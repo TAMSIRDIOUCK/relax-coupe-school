@@ -4,8 +4,8 @@ import { User, Mail, Lock, Scissors, Star, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface SignupFormProps {
-  onSignupSuccess: () => void;       // appelé après inscription réussie
-  onBackToLogin: () => void;         // revenir au formulaire de connexion
+  onSignupSuccess: () => void;
+  onBackToLogin: () => void;
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin }) => {
@@ -67,8 +67,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
 
       if (insertError) throw insertError;
 
+      // Callback vers App.tsx
       onSignupSuccess();
-      onBackToLogin();
     } catch (err: any) {
       let message = 'Une erreur est survenue.';
       if (err.message) {
@@ -93,7 +93,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
                 <Scissors className="w-7 h-7 text-black" />
               </div>
-              <h1 className="text-4xl font-bold text-white">RELEX-COUPE</h1>
+              <h1 className="text-4xl font-bold text-white">RELAX-COUPE</h1>
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold text-white leading-tight">SCHOOL</h2>
             <p className="text-xl text-gray-300 max-w-lg">
@@ -138,6 +138,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Nom */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Nom complet</label>
                 <div className="relative">
@@ -153,6 +154,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
                 </div>
               </div>
 
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
                 <div className="relative">
@@ -168,6 +170,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
                 </div>
               </div>
 
+              {/* Mot de passe */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
                 <div className="relative">
@@ -183,6 +186,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSignupSuccess, onBackToLogin 
                 </div>
               </div>
 
+              {/* Confirmer mot de passe */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Confirmer le mot de passe</label>
                 <div className="relative">

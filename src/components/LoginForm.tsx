@@ -1,11 +1,11 @@
-// LoginForm.tsx
+// src/components/LoginForm.tsx
 import React, { useState, useEffect } from 'react';
 import { User, Lock, AlertTriangle, Scissors, Star } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface LoginFormProps {
-  onLoginSuccess: (userId: string) => void;  // Passe l'ID utilisateur au parent
-  onShowSignup: () => void;                  // Afficher le formulaire d'inscription
+  onLoginSuccess: () => void;
+  onShowSignup: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) => {
@@ -40,7 +40,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
       }
 
       if (data.session?.user) {
-        onLoginSuccess(data.session.user.id);
+        // Callback vers App.tsx pour redirection
+        onLoginSuccess();
       } else {
         setErrorMsg("Impossible de récupérer l'utilisateur. Veuillez réessayer.");
       }
@@ -62,7 +63,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
                 <Scissors className="w-7 h-7 text-black" />
               </div>
-              <h1 className="text-4xl font-bold text-white">RELEX-COUPE</h1>
+              <h1 className="text-4xl font-bold text-white">RELAX-COUPE</h1>
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold text-white leading-tight">SCHOOL</h2>
             <p className="text-xl text-gray-300 max-w-lg">
@@ -107,6 +108,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
                 <div className="relative">
@@ -122,6 +124,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
                 </div>
               </div>
 
+              {/* Mot de passe */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
                 <div className="relative">
