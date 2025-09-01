@@ -114,7 +114,12 @@ const App: React.FC = () => {
       <header className="bg-black/90 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold text-white">RELAX-COUPE SCHOOL</h1>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <img src="/images/ed0c860a-8055-414d-8f31-77036e49bd27.jpg" alt="Icône" className="w-auto h-auto max-w-full max-h-full object-contain"/>
+              </div>
+              <h1 className="text-xl font-bold text-white">RELAX-COUPE SCHOOL</h1>
+            </div>
 
             <div className="md:hidden">
               <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
@@ -180,3 +185,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
