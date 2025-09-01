@@ -13,9 +13,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        onLoginSuccess();
+      }
+    };
+    checkSession();
+  }, [onLoginSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,28 +37,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
       });
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setErrorMsg("Email ou mot de passe incorrect.");
-        } else if (error.message.includes('User not found')) {
-          setErrorMsg("Utilisateur non trouvé. Veuillez vous inscrire.");
-        } else {
-          setErrorMsg(error.message);
-        }
+        if (error.message.includes('Invalid login credentials')) setErrorMsg("Email ou mot de passe incorrect.");
+        else if (error.message.includes('User not found')) setErrorMsg("Utilisateur non trouvé. Veuillez vous inscrire.");
+        else setErrorMsg(error.message);
         return;
       }
 
-      if (data.session?.user) {
-        // Callback vers App.tsx pour redirection
-        onLoginSuccess();
-      } else {
-        setErrorMsg("Impossible de récupérer l'utilisateur. Veuillez réessayer.");
-      }
+      if (data.session?.user) onLoginSuccess();
+      else setErrorMsg("Impossible de récupérer l'utilisateur. Veuillez réessayer.");
     } catch (err: any) {
       console.error("Erreur serveur:", err);
       setErrorMsg("Erreur serveur, veuillez réessayer.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
@@ -73,22 +71,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto lg:mx-0">
-            <div className="flex items-center space-x-3 text-gray-300">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span>Certification professionnelle</span>
-            </div>
-            <div className="flex items-center space-x-3 text-gray-300">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span>Formation en 3 mois</span>
-            </div>
-            <div className="flex items-center space-x-3 text-gray-300">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span>Vidéos & Quiz interactifs</span>
-            </div>
-            <div className="flex items-center space-x-3 text-gray-300">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span>Accès emploi garanti</span>
-            </div>
+            {['Certification professionnelle','Formation en 3 mois','Vidéos & Quiz interactifs','Accès emploi garanti'].map((text, idx) => (
+              <div key={idx} className="flex items-center space-x-3 text-gray-300">
+                <Star className="w-5 h-5 text-yellow-400" />
+                <span>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
 
