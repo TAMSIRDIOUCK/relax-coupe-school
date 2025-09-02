@@ -36,17 +36,28 @@ const App: React.FC = () => {
 
   // ---------------- Session utilisateur ----------------
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        setUserId(data.session.user.id);
-        setCurrentView('dashboard');
-      } else {
+    const initSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (data.session?.user) {
+          setUserId(data.session.user.id);
+          setCurrentView('dashboard');
+        } else {
+          setUserId(null);
+          setCurrentView('login');
+        }
+      } catch (err: any) {
+        console.error('Erreur récupération session Supabase :', err.message);
+        setUserId(null);
         setCurrentView('login');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetchSession();
+
+    initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       if (session?.user) {
@@ -58,7 +69,9 @@ const App: React.FC = () => {
       }
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   // ---------------- Récupérer progression ----------------
@@ -99,7 +112,7 @@ const App: React.FC = () => {
               }
         );
       } catch (err: any) {
-        console.error('Erreur récupération utilisateur:', err.message);
+        console.error('Erreur récupération progression utilisateur:', err.message);
       }
     };
 
@@ -120,7 +133,13 @@ const App: React.FC = () => {
   };
 
   // ---------------- Chargement ----------------
-  if (loading) return <div className="text-white text-center mt-10">Chargement...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white text-lg">
+        ⏳ Chargement de l’application...
+      </div>
+    );
+  }
 
   // ---------------- Contenu principal ----------------
   return (
@@ -129,12 +148,16 @@ const App: React.FC = () => {
       <header className="bg-black/90 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            {/* Logo */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg overflow-hidden">
                 <img
                   src="/images/ed0c860a-8055-414d-8f31-77036e49bd27.jpg"
                   alt="Icône"
                   className="w-auto h-auto max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/fallback-logo.png'; // ✅ évite bug image cassée
+                  }}
                 />
               </div>
               <h1 className="text-xl font-bold text-white">RELAX-COUPE SCHOOL</h1>
