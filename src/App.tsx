@@ -37,14 +37,22 @@ const App: React.FC = () => {
   // ---------------- Session utilisateur ----------------
   useEffect(() => {
     const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        setUserId(data.session.user.id);
-        setCurrentView('dashboard');
-      } else {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (data.session?.user) {
+          setUserId(data.session.user.id);
+          setCurrentView('dashboard');
+        } else {
+          setCurrentView('login');
+        }
+      } catch (err: any) {
+        console.error('Erreur session:', err.message);
         setCurrentView('login');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchSession();
 
@@ -130,11 +138,11 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg overflow-hidden">
+              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                 <img
                   src="/images/ed0c860a-8055-414d-8f31-77036e49bd27.jpg"
                   alt="Icône"
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <h1 className="text-xl font-bold text-white">RELAX-COUPE SCHOOL</h1>
