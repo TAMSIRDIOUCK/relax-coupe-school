@@ -1,11 +1,11 @@
-// src/components/LoginForm.tsx
+// LoginForm.tsx
 import React, { useState, useEffect } from 'react';
 import { User, Lock, AlertTriangle, Scissors, Star } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface LoginFormProps {
-  onLoginSuccess: () => void;
-  onShowSignup: () => void;
+  onLoginSuccess: (userId: string) => void;  // Passe l'ID utilisateur au parent
+  onShowSignup: () => void;                  // Afficher le formulaire d'inscription
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) => {
@@ -13,17 +13,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => { window.scrollTo(0, 0); }, []);
-
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        onLoginSuccess();
-      }
-    };
-    checkSession();
-  }, [onLoginSuccess]);
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,18 +29,27 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
       });
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) setErrorMsg("Email ou mot de passe incorrect.");
-        else if (error.message.includes('User not found')) setErrorMsg("Utilisateur non trouvé. Veuillez vous inscrire.");
-        else setErrorMsg(error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          setErrorMsg("Email ou mot de passe incorrect.");
+        } else if (error.message.includes('User not found')) {
+          setErrorMsg("Utilisateur non trouvé. Veuillez vous inscrire.");
+        } else {
+          setErrorMsg(error.message);
+        }
         return;
       }
 
-      if (data.session?.user) onLoginSuccess();
-      else setErrorMsg("Impossible de récupérer l'utilisateur. Veuillez réessayer.");
+      if (data.session?.user) {
+        onLoginSuccess(data.session.user.id);
+      } else {
+        setErrorMsg("Impossible de récupérer l'utilisateur. Veuillez réessayer.");
+      }
     } catch (err: any) {
       console.error("Erreur serveur:", err);
       setErrorMsg("Erreur serveur, veuillez réessayer.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,7 +62,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center">
                 <Scissors className="w-7 h-7 text-black" />
               </div>
-              <h1 className="text-4xl font-bold text-white">RELAX-COUPE</h1>
+              <h1 className="text-4xl font-bold text-white">RELEX-COUPE</h1>
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold text-white leading-tight">SCHOOL</h2>
             <p className="text-xl text-gray-300 max-w-lg">
@@ -71,12 +72,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto lg:mx-0">
-            {['Certification professionnelle','Formation en 3 mois','Vidéos & Quiz interactifs','Accès emploi garanti'].map((text, idx) => (
-              <div key={idx} className="flex items-center space-x-3 text-gray-300">
-                <Star className="w-5 h-5 text-yellow-400" />
-                <span>{text}</span>
-              </div>
-            ))}
+            <div className="flex items-center space-x-3 text-gray-300">
+              <Star className="w-5 h-5 text-yellow-400" />
+              <span>Certification professionnelle</span>
+            </div>
+            <div className="flex items-center space-x-3 text-gray-300">
+              <Star className="w-5 h-5 text-yellow-400" />
+              <span>Formation en 3 mois</span>
+            </div>
+            <div className="flex items-center space-x-3 text-gray-300">
+              <Star className="w-5 h-5 text-yellow-400" />
+              <span>Vidéos & Quiz interactifs</span>
+            </div>
+            <div className="flex items-center space-x-3 text-gray-300">
+              <Star className="w-5 h-5 text-yellow-400" />
+              <span>Accès emploi garanti</span>
+            </div>
           </div>
         </div>
 
@@ -96,7 +107,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
                 <div className="relative">
@@ -112,7 +122,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onShowSignup }) =
                 </div>
               </div>
 
-              {/* Mot de passe */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
                 <div className="relative">
