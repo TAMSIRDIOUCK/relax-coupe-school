@@ -1,6 +1,6 @@
 // src/components/Dashboard.tsx
-import React, { useEffect, useState } from 'react';
-import { Play, Lock, CheckCircle, Circle, Star, Clock } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Play, Lock, CheckCircle, Circle, Star, Clock, Volume2, VolumeX } from 'lucide-react';
 import ProgressTracker from './ProgressTracker';
 import SignupForm from './SignupForm';
 import { supabase } from '../lib/supabaseClient';
@@ -74,6 +74,10 @@ const sections: Section[] = [
 const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // 🎵 état mute/unmute pour la vidéo (son activé par défaut)
+  const [isMuted, setIsMuted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // ✅ Scroll en haut de page
   useEffect(() => {
@@ -181,6 +185,29 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
         <p className="text-xl text-gray-300 max-w-2xl mx-auto">
           Votre parcours vers l'excellence en coiffure masculine commence ici
         </p>
+      </div>
+
+      {/* 🎥 Vidéo de présentation */}
+      <div className="relative max-w-3xl mx-auto rounded-xl overflow-hidden shadow-lg border border-gray-600">
+        <video
+          ref={videoRef}
+          className="w-full h-64 md:h-90 bg-black"
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          preload="auto"
+        >
+          <source src="/videos/presentation.mp4.MOV" type="video/mp4" />
+          Votre navigateur ne supporte pas la lecture de vidéo.
+        </video>
+        {/* Bouton mute/unmute */}
+        <button
+          onClick={() => setIsMuted(!isMuted)}
+          className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full"
+        >
+          {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+        </button>
       </div>
 
       {/* Barre de progression */}

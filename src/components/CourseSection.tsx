@@ -34,9 +34,9 @@ const sectionContent: Record<number, SectionContent> = {
   1: {
     title: "Hygiène & Préparation - Coiffeur Professionnel Homme",
     videos: [
-      "/videos/hygiene_intro.mp4",
-      "/videos/organisation_salon.mp4",
-      "/videos/materiel.mp4",
+      "/videos/hygiene_intro.mp4.MOV",
+      "/videos/organisation_salon.mp4.MOV",
+      "/videos/materiel.mp5.MOV",
     ],
     contents: [
       // Vidéo 1 : Introduction à l'hygiène
