@@ -34,10 +34,13 @@ const sectionContent: Record<number, SectionContent> = {
   1: {
     title: "Hygiène & Préparation - Coiffeur Professionnel Homme",
     videos: [
-      "/videos/hygiene_intro.mp4.MOV",
-      "/videos/organisation_salon.mp4.MOV",
-      "/videos/materiel.mp5.MOV",
+      "https://www.youtube.com/embed/Sq-vSoMA1xk", 
+      "https://www.youtube.com/embed/bFvea3rOAiA",
+      "https://www.youtube.com/embed/bFvea3rOAiA",
+
     ],
+    
+    
     contents: [
       // Vidéo 1 : Introduction à l'hygiène
       `<h2 style="font-weight:bold; color:#fff; font-size:28px; margin-bottom:20px;">🧼 Introduction à l'hygiène professionnelle</h2>
@@ -699,7 +702,6 @@ const sectionContent: Record<number, SectionContent> = {
   },
   
 };
-
 const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, onBack, onComplete }) => {
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number | null>>(() => {
     const savedAnswers = localStorage.getItem(`quizAnswers-section-${sectionId}`);
@@ -707,18 +709,18 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
   });
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState<number | null>(null);
-  const [isQuizLocked, setIsQuizLocked] = useState(false); // Permet de refaire les quiz
+  const [isQuizLocked, setIsQuizLocked] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<'course' | 'quiz'>('course');
   const [showPurchaseAlert, setShowPurchaseAlert] = useState(false);
   const [canAccessQuiz, setCanAccessQuiz] = useState(true);
 
-  // Ajout pour s'assurer que le haut de la page est affiché en premier
+  // Scroll en haut
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Ajout de l'authentification pour afficher la page
+  // Authentification
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -730,17 +732,14 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
     checkAuth();
   }, []);
 
-
-
-
   const section = sectionContent[sectionId];
   if (!section) return <div className="text-white font-bold p-4">Section non trouvée</div>;
 
   const handleQuizAnswer = (questionIndex: number, answerIndex: number) => {
-    if (isQuizLocked) return; // Empêche les modifications si le quiz est verrouillé
+    if (isQuizLocked) return;
     const updatedAnswers = { ...quizAnswers, [questionIndex]: answerIndex };
     setQuizAnswers(updatedAnswers);
-    localStorage.setItem(`quizAnswers-section-${sectionId}`, JSON.stringify(updatedAnswers)); // Enregistre les réponses dans le localStorage
+    localStorage.setItem(`quizAnswers-section-${sectionId}`, JSON.stringify(updatedAnswers));
   };
 
   const calculateScore = () => {
@@ -751,7 +750,6 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
   };
 
   const handleCompleteQuiz = async () => {
-    // Ajout d'une condition pour empêcher de valider un quiz déjà terminé
     if (userProgress.completedSections.includes(sectionId)) {
       setErrorMessage("Ce quiz a déjà été validé. Vous ne pouvez pas le refaire.");
       return;
@@ -760,9 +758,8 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
     const calculatedScore = calculateScore();
     setScore(calculatedScore);
     setShowResults(true);
-    setIsQuizLocked(true); // Verrouille le quiz après validation
+    setIsQuizLocked(true);
 
-    // Ajout de la logique pour rendre la prochaine section disponible automatiquement après avoir obtenu la moyenne
     if (calculatedScore >= 10) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -774,13 +771,12 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         const updatedCompletedSections = Array.from(new Set([...userProgress.completedSections, sectionId]));
         const updatedScores = { ...userProgress.scores, [sectionId]: calculatedScore };
 
-        // Ajout de la logique pour stocker tous les scores dans la base de données
         await supabase.from("user_progress").upsert(
           {
             user_id: session.user.id,
             current_section: Math.max(sectionId + 1, userProgress.currentSection),
             completed_sections: updatedCompletedSections,
-            scores: updatedScores, // Stocke tous les scores
+            scores: updatedScores,
           },
           { onConflict: 'user_id' }
         );
@@ -796,20 +792,17 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
 
   const handleRetryQuiz = () => {
     setQuizAnswers({});
-    localStorage.removeItem(`quizAnswers-section-${sectionId}`); // Supprime les réponses enregistrées
+    localStorage.removeItem(`quizAnswers-section-${sectionId}`);
     setShowResults(false);
-    setIsQuizLocked(false); // Permet de refaire le quiz
+    setIsQuizLocked(false);
   };
 
-  // Ensure `session` is properly initialized before use
+  // Récupération des sections complétées
   useEffect(() => {
     const fetchCompletedSections = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) {
-          console.error('Erreur lors de la récupération de la session:', sessionError?.message);
-          return;
-        }
+        if (sessionError || !session?.user) return;
 
         const { data, error } = await supabase
           .from('user_progress')
@@ -817,23 +810,15 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
           .eq('user_id', session.user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error('Erreur lors de la récupération des sections terminées:', error.message);
-          return;
-        }
-
-        if (data?.completed_sections) {
-          userProgress.completedSections = data.completed_sections; // Ensure completed sections persist
-        }
+        if (data?.completed_sections) userProgress.completedSections = data.completed_sections;
       } catch (err) {
         console.error('Erreur serveur inconnue:', err);
       }
     };
-
     fetchCompletedSections();
-  }, []); // Removed `session.user.id` dependency as `session` is fetched inside the effect
+  }, []);
 
-  // Mise à jour pour utiliser la colonne `can_access` dans `profiles` et afficher le message d'alerte si nécessaire
+  // Vérification accès quiz
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -850,7 +835,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
           .maybeSingle();
 
         if (error || !data?.can_access_quiz) {
-          setIsQuizLocked(true); // Verrouille l'accès aux quiz
+          setIsQuizLocked(true);
           setCanAccessQuiz(false);
           setShowPurchaseAlert(true);
           return;
@@ -862,7 +847,6 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         console.error('Erreur lors de la vérification des accès:', err);
       }
     };
-
     checkAccess();
   }, []);
 
@@ -876,7 +860,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         <h1 className="text-3xl font-bold text-white">{section.title}</h1>
       </div>
 
-      {/* Navigation entre Cours et Quiz */}
+      {/* Onglets Cours / Quiz */}
       <div className="flex space-x-4 mt-4">
         <button
           onClick={() => setCurrentTab('course')}
@@ -892,17 +876,23 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         </button>
       </div>
 
-      {/* Contenu dynamique basé sur l'onglet sélectionné */}
+      {/* Contenu Cours */}
       {currentTab === 'course' && (
         <div className="space-y-10 mt-10">
           {section.videos.map((videoUrl, idx) => (
             <div key={idx} className="space-y-4">
               <h2 className="text-xl font-bold text-white">Vidéo {idx + 1}</h2>
               <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center w-full h-full">
-                <video controls className="rounded-lg w-full h-full">
-                  <source src={videoUrl} type="video/mp4" />
-                  Votre navigateur ne supporte pas la vidéo.
-                </video>
+                {/* ✅ YouTube iframe */}
+                <iframe
+                  src={videoUrl}
+                  title={`video-${idx}`}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
               <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: section.contents[idx] }} />
             </div>
@@ -910,6 +900,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         </div>
       )}
 
+      {/* Contenu Quiz */}
       {currentTab === 'quiz' && (
         <div className="space-y-6 mt-6">
           <h2 className="text-2xl font-bold text-white">Quiz</h2>
@@ -923,12 +914,12 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
                     onClick={() => handleQuizAnswer(qIdx, optIdx)}
                     className={`w-full py-2 px-4 rounded-lg text-left flex items-center space-x-2 ${
                       quizAnswers[qIdx] === optIdx
-                        ? 'bg-yellow-500 text-black font-bold' // Indique la réponse sélectionnée
+                        ? 'bg-yellow-500 text-black font-bold'
                         : 'bg-gray-700 hover:bg-yellow-600 text-white'
                     }`}
-                    disabled={isQuizLocked} // Désactive les boutons si le quiz est verrouillé
+                    disabled={isQuizLocked}
                   >
-                    {quizAnswers[qIdx] === optIdx && <span className="w-4 h-4 bg-black rounded-full border-2 border-white"></span>} {/* Indicateur visuel */}
+                    {quizAnswers[qIdx] === optIdx && <span className="w-4 h-4 bg-black rounded-full border-2 border-white"></span>}
                     <span>{opt}</span>
                   </button>
                 ))}
@@ -942,9 +933,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
       {showResults && (
         <div className="text-center mt-6">
           <h2 className="text-2xl font-bold text-white">Résultats</h2>
-          <p className="text-gray-300">
-            Votre score : <span className="font-bold">{score}/20</span>
-          </p>
+          <p className="text-gray-300">Votre score : <span className="font-bold">{score}/20</span></p>
           {score !== null && score >= 10 ? (
             <p className="text-green-400 font-bold">Félicitations, vous avez réussi !</p>
           ) : (
@@ -961,7 +950,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         </div>
       )}
 
-      {/* Modification pour afficher "Passer les tests" dans la page "Cours" et rediriger vers "Quiz" */}
+      {/* Boutons Terminer / Passer */}
       {currentTab === 'quiz' && !showResults && (
         <div className="text-center mt-6">
           <button
@@ -972,7 +961,6 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
           </button>
         </div>
       )}
-
       {currentTab === 'course' && (
         <div className="text-center mt-6">
           <button
@@ -984,19 +972,20 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         </div>
       )}
 
+      {/* Message d'erreur */}
       {errorMessage && <div className="p-6 text-red-500 font-bold">{errorMessage}</div>}
 
-      {/* Integration of the provided purchase alert */}
+      {/* Alerte achat */}
       {showPurchaseAlert && !canAccessQuiz && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-0">
           <div className="bg-white rounded-lg shadow-lg p-5 text-center space-y-7 max-w-md">
             <h2 className="text-2xl font-bold text-gray-800">Accès refusé</h2>
             <p className="text-gray-600">Veuillez acheter la formation pour accéder au quiz.</p>
             <a
-              href="https://wa.me/70 477 62 58 "
+              href="https://wa.me/70 477 62 58"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-7 py-1 bg-green-500 hover:bg-green-100 text-white font-medium rounded-lg transition-colors"
+              className="px-7 py-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
             >
               Acheter la formation
             </a>
@@ -1005,7 +994,6 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
       )}
     </div>
   );
-
 };
 
 export default CourseSection;

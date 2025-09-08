@@ -1,6 +1,6 @@
 // src/components/Dashboard.tsx
-import React, { useEffect, useState, useRef } from 'react';
-import { Play, Lock, CheckCircle, Circle, Star, Clock, Volume2, VolumeX } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Play, Lock, CheckCircle, Circle, Star, Clock } from 'lucide-react';
 import ProgressTracker from './ProgressTracker';
 import SignupForm from './SignupForm';
 import { supabase } from '../lib/supabaseClient';
@@ -75,10 +75,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🎵 état mute/unmute pour la vidéo (son activé par défaut)
-  const [isMuted, setIsMuted] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
   // ✅ Scroll en haut de page
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -89,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session?.user) {
-        console.warn('Utilisateur non authentifié. Redirection vers la page d\'inscription.');
+        console.warn("Utilisateur non authentifié. Redirection vers la page d'inscription.");
         setLoading(false);
       }
     };
@@ -122,7 +118,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
             hasPaid: data.has_paid ?? false,
           });
         } else {
-          // Première connexion → initialisation progression
           setProgress({
             userId,
             currentSection: 1,
@@ -169,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
 
   // ✅ Gestion clic sur une section
   const handleSectionClick = (sectionId: number) => {
-    if (!userId) return; // ne fait rien si pas connecté
+    if (!userId) return;
     if (isAccessible(sectionId)) onSectionSelect?.(sectionId);
   };
 
@@ -187,27 +182,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
         </p>
       </div>
 
-      {/* 🎥 Vidéo de présentation */}
+      {/* 🎥 Vidéo de présentation (YouTube embed) */}
       <div className="relative max-w-3xl mx-auto rounded-xl overflow-hidden shadow-lg border border-gray-600">
-        <video
-          ref={videoRef}
-          className="w-full h-64 md:h-90 bg-black"
-          autoPlay
-          loop
-          muted={isMuted}
-          playsInline
-          preload="auto"
-        >
-          <source src="/videos/presentation.mp4.MOV" type="video/mp4" />
-          Votre navigateur ne supporte pas la lecture de vidéo.
-        </video>
-        {/* Bouton mute/unmute */}
-        <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full"
-        >
-          {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-        </button>
+        <iframe
+          className="w-full h-64 md:h-90"
+          src="https://www.youtube.com/embed/Sq-vSoMA1xk?autoplay=1&mute=1&loop=1&playlist=Sq-vSoMA1xk"
+          title="Présentation"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
       </div>
 
       {/* Barre de progression */}
@@ -235,7 +219,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
                 <div className="p-6 flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-3">
-                      <div className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-lg flex items-center justify-center text-white font-bold text-lg`}>
+                      <div
+                        className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-lg flex items-center justify-center text-white font-bold text-lg`}
+                      >
                         {section.id}
                       </div>
                       <div>
