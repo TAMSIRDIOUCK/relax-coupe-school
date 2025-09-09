@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { UserProgressFlat } from '../App'; // Assure-toi que ce chemin est correct
+import { UserProgressFlat } from '../App';
 
 interface CourseSectionProps {
   sectionId: number;
@@ -24,8 +24,8 @@ interface QuizItem {
 
 interface SectionContent {
   title: string;
-  videos: string[];           // jusqu’à 5 vidéos
-  contents: string[];         // jusqu’à 5 contenus HTML
+  videos: string[];
+  contents: string[];
   quiz: QuizItem[];
 }
 
@@ -34,9 +34,9 @@ const sectionContent: Record<number, SectionContent> = {
   1: {
     title: "Hygiène & Préparation - Coiffeur Professionnel Homme",
     videos: [
+      "https://www.youtube.com/embed/bFvea3rOAiA",
+      "https://www.youtube.com/embed/bFvea3rOAiA",
       "https://www.youtube.com/embed/Sq-vSoMA1xk", 
-      "https://www.youtube.com/embed/bFvea3rOAiA",
-      "https://www.youtube.com/embed/bFvea3rOAiA",
 
     ],
     
@@ -704,8 +704,8 @@ const sectionContent: Record<number, SectionContent> = {
 };
 const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, onBack, onComplete }) => {
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number | null>>(() => {
-    const savedAnswers = localStorage.getItem(`quizAnswers-section-${sectionId}`);
-    return savedAnswers ? JSON.parse(savedAnswers) : {};
+    const saved = localStorage.getItem(`quizAnswers-section-${sectionId}`);
+    return saved ? JSON.parse(saved) : {};
   });
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState<number | null>(null);
@@ -715,38 +715,29 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
   const [showPurchaseAlert, setShowPurchaseAlert] = useState(false);
   const [canAccessQuiz, setCanAccessQuiz] = useState(true);
 
-  // Scroll en haut
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  const section = sectionContent[sectionId];
+  if (!section) return <div className="text-white font-bold p-4">Section non trouvée</div>;
 
-  // Authentification
+  useEffect(() => window.scrollTo(0, 0), []);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.user) {
-        console.error('Utilisateur non authentifié. Redirection vers la page de connexion.');
-        window.location.href = '/login';
-      }
+      if (error || !session?.user) window.location.href = '/login';
     };
     checkAuth();
   }, []);
 
-  const section = sectionContent[sectionId];
-  if (!section) return <div className="text-white font-bold p-4">Section non trouvée</div>;
-
-  const handleQuizAnswer = (questionIndex: number, answerIndex: number) => {
+  const handleQuizAnswer = (qIdx: number, aIdx: number) => {
     if (isQuizLocked) return;
-    const updatedAnswers = { ...quizAnswers, [questionIndex]: answerIndex };
-    setQuizAnswers(updatedAnswers);
-    localStorage.setItem(`quizAnswers-section-${sectionId}`, JSON.stringify(updatedAnswers));
+    const updated = { ...quizAnswers, [qIdx]: aIdx };
+    setQuizAnswers(updated);
+    localStorage.setItem(`quizAnswers-section-${sectionId}`, JSON.stringify(updated));
   };
 
   const calculateScore = () => {
-    const correctAnswers = section.quiz.reduce((count, question, index) => {
-      return quizAnswers[index] === question.correct ? count + 1 : count;
-    }, 0);
-    return Math.round((correctAnswers / section.quiz.length) * 20);
+    const correctCount = section.quiz.reduce((acc, q, idx) => quizAnswers[idx] === q.correct ? acc + 1 : acc, 0);
+    return Math.round((correctCount / section.quiz.length) * 20);
   };
 
   const handleCompleteQuiz = async () => {
@@ -763,25 +754,19 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
     if (calculatedScore >= 10) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          setErrorMessage('Utilisateur non connecté.');
-          return;
-        }
+        if (!session?.user) return setErrorMessage('Utilisateur non connecté.');
 
-        const updatedCompletedSections = Array.from(new Set([...userProgress.completedSections, sectionId]));
+        const updatedCompleted = Array.from(new Set([...userProgress.completedSections, sectionId]));
         const updatedScores = { ...userProgress.scores, [sectionId]: calculatedScore };
 
-        await supabase.from("user_progress").upsert(
-          {
-            user_id: session.user.id,
-            current_section: Math.max(sectionId + 1, userProgress.currentSection),
-            completed_sections: updatedCompletedSections,
-            scores: updatedScores,
-          },
-          { onConflict: 'user_id' }
-        );
+        await supabase.from('user_progress').upsert({
+          user_id: session.user.id,
+          current_section: Math.max(sectionId + 1, userProgress.currentSection),
+          completed_sections: updatedCompleted,
+          scores: updatedScores,
+        }, { onConflict: 'user_id' });
 
-        onComplete(sectionId, calculatedScore, updatedCompletedSections, updatedScores);
+        onComplete(sectionId, calculatedScore, updatedCompleted, updatedScores);
       } catch (err: any) {
         setErrorMessage(`Erreur lors de la mise à jour : ${err.message}`);
       }
@@ -795,59 +780,33 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
     localStorage.removeItem(`quizAnswers-section-${sectionId}`);
     setShowResults(false);
     setIsQuizLocked(false);
+    setErrorMessage(null);
   };
 
-  // Récupération des sections complétées
   useEffect(() => {
-    const fetchCompletedSections = async () => {
+    const checkQuizAccess = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return setErrorMessage('Utilisateur non connecté.');
 
-        const { data, error } = await supabase
-          .from('user_progress')
-          .select('completed_sections')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (data?.completed_sections) userProgress.completedSections = data.completed_sections;
-      } catch (err) {
-        console.error('Erreur serveur inconnue:', err);
-      }
-    };
-    fetchCompletedSections();
-  }, []);
-
-  // Vérification accès quiz
-  useEffect(() => {
-    const checkAccess = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) {
-          setErrorMessage('Utilisateur non connecté.');
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('profiles')
+        const { data } = await supabase.from('profiles')
           .select('can_access_quiz')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (error || !data?.can_access_quiz) {
+        if (!data?.can_access_quiz) {
           setIsQuizLocked(true);
           setCanAccessQuiz(false);
           setShowPurchaseAlert(true);
-          return;
+        } else {
+          setCanAccessQuiz(true);
+          setShowPurchaseAlert(false);
         }
-
-        setCanAccessQuiz(true);
-        setShowPurchaseAlert(false);
       } catch (err) {
-        console.error('Erreur lors de la vérification des accès:', err);
+        console.error(err);
       }
     };
-    checkAccess();
+    checkQuizAccess();
   }, []);
 
   return (
@@ -860,47 +819,23 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
         <h1 className="text-3xl font-bold text-white">{section.title}</h1>
       </div>
 
-      {/* Onglets Cours / Quiz */}
+      {/* Tabs */}
       <div className="flex space-x-4 mt-4">
-        <button
-          onClick={() => setCurrentTab('course')}
-          className={`px-4 py-2 rounded-lg font-bold ${currentTab === 'course' ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}
-        >
-          Cours
-        </button>
-        <button
-          onClick={() => setCurrentTab('quiz')}
-          className={`px-4 py-2 rounded-lg font-bold ${currentTab === 'quiz' ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}
-        >
-          Quiz
-        </button>
+        <button onClick={() => setCurrentTab('course')} className={`px-4 py-2 rounded-lg font-bold ${currentTab === 'course' ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>Cours</button>
+        <button onClick={() => setCurrentTab('quiz')} className={`px-4 py-2 rounded-lg font-bold ${currentTab === 'quiz' ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>Quiz</button>
       </div>
 
-      {/* Contenu Cours */}
-      {currentTab === 'course' && (
-        <div className="space-y-10 mt-10">
-          {section.videos.map((videoUrl, idx) => (
-            <div key={idx} className="space-y-4">
-              <h2 className="text-xl font-bold text-white">Vidéo {idx + 1}</h2>
-              <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center w-full h-full">
-                {/* ✅ YouTube iframe */}
-                <iframe
-                  src={videoUrl}
-                  title={`video-${idx}`}
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: section.contents[idx] }} />
-            </div>
-          ))}
+      {/* Contenu */}
+      {currentTab === 'course' && section.videos.map((video, idx) => (
+        <div key={idx} className="space-y-4 mt-10">
+          <h2 className="text-xl font-bold text-white">Vidéo {idx + 1}</h2>
+          <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
+            <iframe src={video} title={`video-${idx}`} width="100%" height="100%" frameBorder="0" allowFullScreen />
+          </div>
+          <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: section.contents[idx] }} />
         </div>
-      )}
+      ))}
 
-      {/* Contenu Quiz */}
       {currentTab === 'quiz' && (
         <div className="space-y-6 mt-6">
           <h2 className="text-2xl font-bold text-white">Quiz</h2>
@@ -909,16 +844,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
               <h4 className="text-white font-medium mb-2">{q.question}</h4>
               <div className="grid gap-2">
                 {q.options.map((opt, optIdx) => (
-                  <button
-                    key={optIdx}
-                    onClick={() => handleQuizAnswer(qIdx, optIdx)}
-                    className={`w-full py-2 px-4 rounded-lg text-left flex items-center space-x-2 ${
-                      quizAnswers[qIdx] === optIdx
-                        ? 'bg-yellow-500 text-black font-bold'
-                        : 'bg-gray-700 hover:bg-yellow-600 text-white'
-                    }`}
-                    disabled={isQuizLocked}
-                  >
+                  <button key={optIdx} onClick={() => handleQuizAnswer(qIdx, optIdx)} disabled={isQuizLocked} className={`w-full py-2 px-4 rounded-lg text-left flex items-center space-x-2 ${quizAnswers[qIdx] === optIdx ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-700 hover:bg-yellow-600 text-white'}`}>
                     {quizAnswers[qIdx] === optIdx && <span className="w-4 h-4 bg-black rounded-full border-2 border-white"></span>}
                     <span>{opt}</span>
                   </button>
@@ -939,36 +865,21 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
           ) : (
             <div>
               <p className="text-red-400 font-bold">Vous n'avez pas atteint la moyenne. Veuillez revoir le cours.</p>
-              <button
-                onClick={handleRetryQuiz}
-                className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg"
-              >
-                Refaire le Quiz
-              </button>
+              <button onClick={handleRetryQuiz} className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg">Refaire le Quiz</button>
             </div>
           )}
         </div>
       )}
 
-      {/* Boutons Terminer / Passer */}
+      {/* Boutons */}
       {currentTab === 'quiz' && !showResults && (
         <div className="text-center mt-6">
-          <button
-            onClick={handleCompleteQuiz}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg"
-          >
-            Terminer le Quiz
-          </button>
+          <button onClick={handleCompleteQuiz} className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg">Terminer le Quiz</button>
         </div>
       )}
       {currentTab === 'course' && (
         <div className="text-center mt-6">
-          <button
-            onClick={() => setCurrentTab('quiz')}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg"
-          >
-            Passer les tests
-          </button>
+          <button onClick={() => setCurrentTab('quiz')} className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg">Passer les tests</button>
         </div>
       )}
 
@@ -981,14 +892,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({ sectionId, userProgress, 
           <div className="bg-white rounded-lg shadow-lg p-5 text-center space-y-7 max-w-md">
             <h2 className="text-2xl font-bold text-gray-800">Accès refusé</h2>
             <p className="text-gray-600">Veuillez acheter la formation pour accéder au quiz.</p>
-            <a
-              href="https://wa.me/70 477 62 58"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-7 py-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
-            >
-              Acheter la formation
-            </a>
+            <a href="https://wa.me/704776258" target="_blank" rel="noopener noreferrer" className="px-7 py-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors">Acheter la formation</a>
           </div>
         </div>
       )}
