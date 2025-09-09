@@ -186,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, onSectionSelect }) => {
       <div className="relative max-w-3xl mx-auto rounded-xl overflow-hidden shadow-lg border border-gray-600">
         <iframe
           className="w-full h-64 md:h-90"
-          src="https://www.youtube.com/embed/Sq-vSoMA1xk?autoplay=1&mute=1&loop=1&playlist=Sq-vSoMA1xk"
+          src="https://www.youtube.com/embed/5hvoUIwV9Gw"
           title="Présentation"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
