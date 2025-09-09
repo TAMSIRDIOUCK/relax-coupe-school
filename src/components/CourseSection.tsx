@@ -34,11 +34,11 @@ const sectionContent: Record<number, SectionContent> = {
   1: {
     title: "Hygiène & Préparation - Coiffeur Professionnel Homme",
     videos: [
-      "https://www.youtube.com/embed/Yilm5PILEzA",
-      "https://www.youtube.com/embed/bFvea3rOAiA",
-      "https://www.youtube.com/embed/Sq-vSoMA1xk", 
-
+      "https://www.youtube.com/embed/Yilm5PILEzA?rel=0&showinfo=0",
+      "https://www.youtube.com/embed/bFvea3rOAiA?rel=0&showinfo=0",
+      "https://www.youtube.com/embed/Sq-vSoMA1xk?rel=0&showinfo=0"
     ],
+    
     
     
     contents: [
