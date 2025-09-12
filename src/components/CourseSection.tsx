@@ -182,7 +182,7 @@ const sectionContent: Record<number, SectionContent> = {
     title: "Techniques de Base du Rasage & Coupes Simples",
     videos: [
       "https://www.youtube.com/embed/ymHSWOVrvR0?rel=0&showinfo=0",
-      "/videos/rasage_techniques.mp4",
+      "https://www.youtube.com/embed/X8aem9jA_6U?rel=0&showinfo=0",
       "/videos/coupes_simples_ciseaux.mp4",
       "/videos/coupes_simples_tondeuse.mp4",
     ],
